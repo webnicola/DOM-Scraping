@@ -1,0 +1,45 @@
+<?php
+
+function dom_scraping_menu() {
+
+  $items['dom-scraping.json'] = array(
+    'title' => 'Preview',
+    'page callback' => 'dom_scraping_api',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+function dom_scraping_api() {
+  global $base_url;
+  global $base_path;
+  
+  $api["title"]   = "Title";
+  $api["description"]   = "TODO ad description";
+  
+  /* Style */
+  $api["style"]["main"]   = drupal_get_css();
+  $api["style"]["custom"] = file_get_contents(drupal_get_path('module', 'dom_scraping') . '/css/custom.css');
+  
+  /* Javascript */
+  $api["javascript"]["main"]   = drupal_get_js(TRUE);
+  $api["javascript"]["custom"] = file_get_contents(drupal_get_path('module', 'dom_scraping') . '/js/custom.js');
+  
+  /* Get DOM from site */
+  $dom = new DOMDocument();
+  libxml_use_internal_errors(TRUE); //disable libxml errors
+  $dom->loadHTMLFile($base_url.$base_path);
+  
+  $api["header"]   = $dom->saveHTML($dom->getElementById("header"));
+  $api["mainmenu"] = $dom->saveHTML($dom->getElementById("main-menu"));
+  $api["footer"]   = $dom->saveHTML($dom->getElementById("footer"));
+  
+  // Absolute path
+  $api["header"]   = str_replace('href="/', 'href="'.$base_url.$base_path, $api["header"]);
+  $api["mainmenu"] = str_replace('href="/', 'href="'.$base_url.$base_path, $api["mainmenu"]);
+  $api["footer"] = str_replace('href="/', 'href="'.$base_url.$base_path, $api["footer"]);
+
+  header('Content-type:application/json');
+  echo json_encode($api);
+}
+
